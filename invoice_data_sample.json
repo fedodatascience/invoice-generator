@@ -1,0 +1,43 @@
+{
+  "invoice_number": "202601",
+  "variable_symbol": "202601",
+  "supplier": {
+    "name": "Vzorová firma s. r. o.",
+    "address": "Hlavná 1",
+    "city": "010 01 Žilina, Slovensko",
+    "ico": "12345678",
+    "dic": "2012345678",
+    "register": "Obchodný register OS Žilina, oddiel: Sro, vložka č. 12345/L"
+  },
+  "customer": {
+    "name": "Klient s. r. o.",
+    "address": "Obchodná 10",
+    "city": "811 06 Bratislava, Slovensko",
+    "ico": "87654321",
+    "dic": "2087654321",
+    "icdph": "SK2087654321"
+  },
+  "issue_date": "15.01.2026",
+  "delivery_date": "15.01.2026",
+  "due_date": "31.01.2026",
+  "bank": {
+    "name": "Slovenská sporiteľňa, a.s.",
+    "iban": "SK00 0000 0000 0000 0000 0000"
+  },
+  "items": [
+    {
+      "description": "Poradenstvo v oblasti marketingu za mesiac Január 2026",
+      "price": "2 500,00"
+    },
+    {
+      "description": "Správa reklamných kampaní — Január 2026",
+      "price": "1 000,00"
+    }
+  ],
+  "total": "3 500,00",
+  "issuer": {
+    "name": "Ján Vzorový",
+    "phone": "+421 900 000 000",
+    "email": "jan@vzorovafirma.sk"
+  }
+}

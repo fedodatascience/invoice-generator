@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generátor faktúr</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #f2f1ed;
+    --card: #ffffff;
+    --ink: #1a1a1a;
+    --ink2: #4a4a4a;
+    --ink3: #8a8a8a;
+    --accent: #2d5a27;
+    --accent-hover: #224a1d;
+    --accent-light: #eaf2e8;
+    --border: #ddd9d1;
+    --border-focus: #2d5a27;
+    --red: #b83220;
+    --radius: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow-lg: 0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    background: var(--ink);
+    color: #fff;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  .topbar .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    background: rgba(255,255,255,0.12);
+    padding: 3px 10px; border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── TAB BAR ─── */
+  .tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    gap: 0;
+  }
+  .tabs button {
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    padding: 13px 22px;
+    border: none; background: none;
+    color: var(--ink3); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tabs button:hover:not(.active) { color: var(--ink2); }
+
+  /* ─── LAYOUT ─── */
+  .page { max-width: 860px; margin: 0 auto; padding: 28px 24px 60px; }
+  .page.hidden { display: none; }
+
+  /* ─── FORM ─── */
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 26px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .section-title {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--accent);
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title svg { width: 15px; height: 15px; opacity: 0.7; }
+
+  .grid { display: grid; gap: 14px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .full { grid-column: 1 / -1; }
+
+  label { display: block; font-size: 11px; font-weight: 500; color: var(--ink3); margin-bottom: 4px; letter-spacing: 0.2px; }
+  input, textarea {
+    width: 100%; font-family: inherit; font-size: 13px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--ink);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  input:focus, textarea:focus { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--accent-light); }
+  textarea { resize: vertical; min-height: 48px; }
+
+  /* ─── ITEMS TABLE ─── */
+  .items-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .items-table th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    color: var(--ink3); text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 8px 8px 8px 0; border-bottom: 2px solid var(--border);
+  }
+  .items-table th.r { text-align: right; padding-right: 0; }
+  .items-table td { padding: 8px 8px 8px 0; vertical-align: top; }
+  .items-table td:last-child { padding-right: 0; }
+  .items-table td input { font-size: 13px; }
+  .items-table .price-input { text-align: right; }
+  .items-table .row-del {
+    background: none; border: none; color: var(--ink3);
+    cursor: pointer; font-size: 18px; padding: 6px 8px; border-radius: 4px;
+    transition: all 0.15s; line-height: 1;
+  }
+  .items-table .row-del:hover { background: #fdecea; color: var(--red); }
+
+  .add-row-btn {
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    color: var(--accent); background: var(--accent-light);
+    border: 1px dashed var(--accent);
+    border-radius: 5px;
+    padding: 8px 16px; cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.15s;
+  }
+  .add-row-btn:hover { background: #dae8d6; }
+
+  /* ─── BUTTONS ─── */
+  .actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+  .btn {
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    padding: 11px 28px; border-radius: 5px;
+    border: none; cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-outline { background: var(--card); color: var(--ink2); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--ink3); }
+  .btn svg { width: 15px; height: 15px; }
+
+  .json-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .json-bar .btn { font-size: 12px; padding: 8px 16px; }
+  .json-bar .hint { font-size: 11px; color: var(--ink3); }
+
+  .preview-controls { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 16px; }
+
+  /* ═══════════════ INVOICE PREVIEW ═══════════════ */
+  .invoice-frame {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 48px 52px;
+    min-height: 900px;
+  }
+  .inv { font-family: 'DM Sans', sans-serif; color: #1a1a1a; font-size: 12.5px; line-height: 1.55; }
+
+  .inv-header-bar {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 32px; padding-bottom: 20px;
+    border-bottom: 3px solid #1a1a1a;
+  }
+  .inv-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .inv-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 500;
+    background: #f5f5f3; padding: 6px 14px; border-radius: 4px;
+    margin-top: 6px; display: inline-block;
+  }
+
+  .inv-parties { display: flex; gap: 24px; margin-bottom: 24px; }
+  .inv-party { flex: 1; border: 1px solid #e0e0e0; border-radius: 6px; padding: 18px 20px; }
+  .inv-party-label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: #999; margin-bottom: 8px;
+  }
+  .inv-party-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .inv-party-detail { font-size: 12px; color: #444; line-height: 1.65; }
+  .inv-party-detail span { color: #999; }
+
+  .inv-meta {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6px 32px;
+    background: #f9f9f7; border-radius: 6px;
+    padding: 16px 20px; margin-bottom: 28px; font-size: 12.5px;
+  }
+  .inv-meta-row { display: flex; justify-content: space-between; }
+  .inv-meta-label { color: #999; font-weight: 500; }
+  .inv-meta-value { font-weight: 600; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  .inv-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  .inv-table thead th {
+    text-align: left; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: #999; padding: 10px 12px;
+    border-bottom: 2px solid #1a1a1a;
+  }
+  .inv-table thead th.r { text-align: right; }
+  .inv-table tbody td { padding: 12px; border-bottom: 1px solid #eee; font-size: 12.5px; }
+  .inv-table tbody td.r { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  .inv-total-row {
+    display: flex; justify-content: flex-end; margin-bottom: 16px;
+    border-top: 2px solid #1a1a1a; padding-top: 14px;
+  }
+  .inv-total-box {
+    display: flex; align-items: baseline; gap: 10px;
+    font-size: 18px; font-weight: 700; letter-spacing: -0.3px;
+    color: #1a1a1a;
+  }
+  .inv-total-box .cur { font-weight: 500; font-size: 13px; color: #888; }
+  .inv-total-box .amount { font-family: 'JetBrains Mono', monospace; }
+
+  .inv-note { font-size: 11.5px; color: #999; font-style: italic; margin-bottom: 40px; }
+
+  .inv-footer {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-top: 48px; padding-top: 20px; border-top: 1px solid #eee;
+  }
+  .inv-sig-line { width: 200px; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 6px; }
+  .inv-issuer { text-align: right; font-size: 11.5px; color: #666; line-height: 1.65; }
+
+  /* ═══════════════ PRINT ═══════════════ */
+  @media print {
+    body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+    .topbar, .tabs, .page#formPage, .preview-controls, .json-bar { display: none !important; }
+    .page#previewPage { display: block !important; padding: 0 !important; max-width: none !important; }
+    .invoice-frame {
+      border: none !important; box-shadow: none !important;
+      border-radius: 0 !important; padding: 32px 40px !important; min-height: auto !important;
+    }
+    @page { size: A4; margin: 12mm; }
+  }
+
+  @media (max-width: 700px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .full { grid-column: 1; }
+    .inv-parties { flex-direction: column; }
+    .inv-meta { grid-template-columns: 1fr; }
+    .invoice-frame { padding: 24px 18px; }
+    .page { padding: 16px 10px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Generátor faktúr</h1>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="active" onclick="switchTab('form')">Údaje faktúry</button>
+  <button onclick="switchTab('preview')">Náhľad &amp; PDF</button>
+</div>
+
+<!-- ═══════════════ FORM PAGE ═══════════════ -->
+<div class="page" id="formPage">
+
+  <div class="json-bar">
+    <button class="btn btn-outline" onclick="exportJSON()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportuj JSON
+    </button>
+    <label class="btn btn-outline" style="margin:0;cursor:pointer;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Načítaj JSON
+      <input type="file" accept=".json" onchange="importJSON(event)" style="display:none;">
+    </label>
+    <span class="hint">Ulož / načítaj invoice_data.json pre znovupoužitie</span>
+  </div>
+
+  <!-- Invoice # -->
+  <div class="section">
+    <div class="section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Faktúra
+    </div>
+    <div class="grid grid-3">
+      <div><label>Číslo faktúry</label><input id="invoice_number" value=""></div>
+      <div><label>Variabilný symbol</label><input id="variable_symbol" value=""></div>
+      <div></div>
+    </div>
+  </div>
+
+  <!-- Supplier & Customer -->
+  <div class="grid grid-2">
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Dodávateľ
+      </div>
+      <div class="grid" style="grid-template-columns:1fr;">
+        <div><label>Názov</label><input id="sup_name" value=""></div>
+        <div><label>Adresa</label><input id="sup_address" value=""></div>
+        <div><label>Mesto, PSČ, krajina</label><input id="sup_city" value=""></div>
+        <div class="grid grid-2">
+          <div><label>IČO</label><input id="sup_ico" value=""></div>
+          <div><label>DIČ</label><input id="sup_dic" value=""></div>
+        </div>
+        <div><label>Zápis v registri</label><textarea id="sup_register"></textarea></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Odberateľ
+      </div>
+      <div class="grid" style="grid-template-columns:1fr;">
+        <div><label>Názov</label><input id="cust_name" value=""></div>
+        <div><label>Adresa</label><input id="cust_address" value=""></div>
+        <div><label>Mesto, PSČ, krajina</label><input id="cust_city" value=""></div>
+        <div class="grid grid-2">
+          <div><label>IČO</label><input id="cust_ico" value=""></div>
+          <div><label>DIČ</label><input id="cust_dic" value=""></div>
+        </div>
+        <div><label>IČ DPH</label><input id="cust_icdph" value=""></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dates & Bank -->
+  <div class="grid grid-2">
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Dátumy
+      </div>
+      <div class="grid grid-3">
+        <div><label>Vystavenia</label><input type="date" id="issue_date" value=""></div>
+        <div><label>Dodania</label><input type="date" id="delivery_date" value=""></div>
+        <div><label>Splatnosti</label><input type="date" id="due_date" value=""></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Banka
+      </div>
+      <div class="grid" style="grid-template-columns:1fr;">
+        <div><label>Banka</label><input id="bank_name" value=""></div>
+        <div><label>IBAN</label><input id="bank_iban" value=""></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Items -->
+  <div class="section">
+    <div class="section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Položky
+    </div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width:55%;">Popis</th>
+          <th class="r" style="width:18%;">Jedn. cena (€)</th>
+          <th class="r" style="width:18%;">Celkom (€)</th>
+          <th style="width:9%;"></th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody"></tbody>
+    </table>
+    <button class="add-row-btn" onclick="addItem()">+ Pridať položku</button>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:2px solid var(--ink);">
+      <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px;">
+        Celkom: <span id="totalDisplay">0,00</span> €
+      </div>
+    </div>
+  </div>
+
+  <!-- Issuer -->
+  <div class="section">
+    <div class="section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Vystavil
+    </div>
+    <div class="grid grid-3">
+      <div><label>Meno</label><input id="issuer_name" value=""></div>
+      <div><label>Telefón</label><input id="issuer_phone" value=""></div>
+      <div><label>Email</label><input id="issuer_email" value=""></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="switchTab('preview')">
+      Náhľad faktúry
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════ PREVIEW PAGE ═══════════════ -->
+<div class="page hidden" id="previewPage">
+  <div class="preview-controls">
+    <button class="btn btn-outline" onclick="switchTab('form')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Späť na úpravu
+    </button>
+    <button class="btn btn-primary" onclick="window.print()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Uložiť ako PDF
+    </button>
+  </div>
+
+  <div class="invoice-frame" id="invoiceFrame"></div>
+</div>
+
+<script>
+/* ─── ITEMS ─── */
+let items = [
+  { description: '', price: '0,00' }
+];
+
+function renderItems() {
+  const tbody = document.getElementById('itemsBody');
+  tbody.innerHTML = '';
+  items.forEach((item, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input value="' + esc(item.description) + '" oninput="items[' + i + '].description=this.value;recalc()"></td>' +
+      '<td><input class="price-input" value="' + esc(item.price) + '" oninput="items[' + i + '].price=this.value;recalc()"></td>' +
+      '<td><input class="price-input" value="' + esc(item.price) + '" readonly tabindex="-1" style="background:#f9f9f7;color:var(--ink2);"></td>' +
+      '<td style="text-align:center;"><button class="row-del" onclick="removeItem(' + i + ')" title="Odstrániť">&times;</button></td>';
+    tbody.appendChild(tr);
+  });
+  recalc();
+}
+
+function addItem() {
+  items.push({ description: '', price: '0,00' });
+  renderItems();
+  const rows = document.querySelectorAll('#itemsBody tr');
+  const last = rows[rows.length - 1];
+  if (last) last.querySelector('input').focus();
+}
+
+function removeItem(i) {
+  if (items.length <= 1) return;
+  items.splice(i, 1);
+  renderItems();
+}
+
+function parsePrice(s) {
+  return parseFloat(String(s).replace(/\s/g, '').replace(',', '.')) || 0;
+}
+
+function fmtPrice(n) {
+  return n.toLocaleString('sk-SK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function recalc() {
+  let sum = 0;
+  items.forEach(function(it) { sum += parsePrice(it.price); });
+  document.getElementById('totalDisplay').textContent = fmtPrice(sum);
+}
+
+/* ─── TABS ─── */
+function switchTab(tab) {
+  var btns = document.querySelectorAll('.tabs button');
+  btns[0].classList.toggle('active', tab === 'form');
+  btns[1].classList.toggle('active', tab === 'preview');
+  document.getElementById('formPage').classList.toggle('hidden', tab !== 'form');
+  document.getElementById('previewPage').classList.toggle('hidden', tab !== 'preview');
+  if (tab === 'preview') renderInvoice();
+  window.scrollTo(0, 0);
+}
+
+/* ─── GATHER ─── */
+function v(id) { return document.getElementById(id).value; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function he(s) { return esc(s || ''); }
+
+/* date helpers: YYYY-MM-DD <-> DD.MM.YYYY */
+function isoToSk(iso) { if (!iso) return ''; var p = iso.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
+function skToIso(sk) { if (!sk) return ''; var p = sk.split('.'); return p[2] + '-' + p[1] + '-' + p[0]; }
+
+function gatherData() {
+  var total = 0;
+  items.forEach(function(it) { total += parsePrice(it.price); });
+  return {
+    invoice_number: v('invoice_number'),
+    variable_symbol: v('variable_symbol'),
+    supplier: { name: v('sup_name'), address: v('sup_address'), city: v('sup_city'), ico: v('sup_ico'), dic: v('sup_dic'), register: v('sup_register') },
+    customer: { name: v('cust_name'), address: v('cust_address'), city: v('cust_city'), ico: v('cust_ico'), dic: v('cust_dic'), icdph: v('cust_icdph') },
+    issue_date: isoToSk(v('issue_date')),
+    delivery_date: isoToSk(v('delivery_date')),
+    due_date: isoToSk(v('due_date')),
+    bank: { name: v('bank_name'), iban: v('bank_iban') },
+    items: items,
+    total: fmtPrice(total),
+    issuer: { name: v('issuer_name'), phone: v('issuer_phone'), email: v('issuer_email') }
+  };
+}
+
+/* ─── RENDER INVOICE ─── */
+function renderInvoice() {
+  var d = gatherData();
+  var rows = '';
+  d.items.forEach(function(it) {
+    rows += '<tr><td>' + he(it.description) + '</td><td class="r">' + he(it.price) + ' &euro;</td><td class="r">' + he(it.price) + ' &euro;</td></tr>';
+  });
+
+  document.getElementById('invoiceFrame').innerHTML =
+    '<div class="inv">' +
+
+    '<div class="inv-header-bar">' +
+      '<div>' +
+        '<div class="inv-title">Fakt\u00fara</div>' +
+        '<div class="inv-num"># ' + he(d.invoice_number) + '</div>' +
+      '</div>' +
+      '<div style="text-align:right;font-size:11.5px;color:#888;line-height:1.65;">' +
+        he(d.supplier.name) + '<br>' + he(d.supplier.address) + '<br>' + he(d.supplier.city) +
+      '</div>' +
+    '</div>' +
+
+    '<div class="inv-parties">' +
+      '<div class="inv-party">' +
+        '<div class="inv-party-label">Dod\u00e1vate\u013e</div>' +
+        '<div class="inv-party-name">' + he(d.supplier.name) + '</div>' +
+        '<div class="inv-party-detail">' +
+          he(d.supplier.address) + '<br>' + he(d.supplier.city) + '<br><br>' +
+          '<span>I\u010cO:</span> ' + he(d.supplier.ico) + '<br>' +
+          '<span>DI\u010c:</span> ' + he(d.supplier.dic) + '<br>' +
+          '<span style="font-size:11px;">' + he(d.supplier.register) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="inv-party">' +
+        '<div class="inv-party-label">Odberate\u013e</div>' +
+        '<div class="inv-party-name">' + he(d.customer.name) + '</div>' +
+        '<div class="inv-party-detail">' +
+          he(d.customer.address) + '<br>' + he(d.customer.city) + '<br><br>' +
+          '<span>I\u010cO:</span> ' + he(d.customer.ico) + '<br>' +
+          '<span>DI\u010c:</span> ' + he(d.customer.dic) + '<br>' +
+          '<span>I\u010c DPH:</span> ' + he(d.customer.icdph) +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="inv-meta">' +
+      '<div class="inv-meta-row"><span class="inv-meta-label">D\u00e1tum vystavenia</span><span class="inv-meta-value">' + he(d.issue_date) + '</span></div>' +
+      '<div class="inv-meta-row"><span class="inv-meta-label">Banka</span><span class="inv-meta-value" style="font-family:\'DM Sans\',sans-serif;font-size:12.5px;">' + he(d.bank.name) + '</span></div>' +
+      '<div class="inv-meta-row"><span class="inv-meta-label">D\u00e1tum dodania</span><span class="inv-meta-value">' + he(d.delivery_date) + '</span></div>' +
+      '<div class="inv-meta-row"><span class="inv-meta-label">IBAN</span><span class="inv-meta-value">' + he(d.bank.iban) + '</span></div>' +
+      '<div class="inv-meta-row"><span class="inv-meta-label">D\u00e1tum splatnosti</span><span class="inv-meta-value">' + he(d.due_date) + '</span></div>' +
+      '<div class="inv-meta-row"><span class="inv-meta-label">Variabiln\u00fd symbol</span><span class="inv-meta-value">' + he(d.variable_symbol) + '</span></div>' +
+      '<div class="inv-meta-row"><span class="inv-meta-label">Forma \u00fahrady</span><span class="inv-meta-value" style="font-family:\'DM Sans\',sans-serif;font-size:12.5px;">Bankov\u00fd prevod</span></div>' +
+    '</div>' +
+
+    '<table class="inv-table"><thead><tr>' +
+      '<th>N\u00e1zov a popis polo\u017eky</th>' +
+      '<th class="r">Jedn. cena</th>' +
+      '<th class="r">Celkom</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>' +
+
+    '<div class="inv-total-row"><div class="inv-total-box"><span class="cur">Celkom</span> <span class="amount">' + he(d.total) + ' &euro;</span></div></div>' +
+
+    '<div class="inv-note">Nie sme platite\u013emi DPH.</div>' +
+
+    '<div class="inv-footer">' +
+      '<div><div class="inv-sig-line">&nbsp;</div><div style="font-size:11px;color:#aaa;">Podpis a pe\u010diatka</div></div>' +
+      '<div class="inv-issuer"><strong>' + he(d.issuer.name) + '</strong><br>' + he(d.issuer.phone) + '<br>' + he(d.issuer.email) + '</div>' +
+    '</div>' +
+
+    '</div>';
+}
+
+/* ─── JSON EXPORT / IMPORT ─── */
+function exportJSON() {
+  var d = gatherData();
+  var blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'invoice_data_' + d.invoice_number + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importJSON(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var d = JSON.parse(ev.target.result);
+      if (d.invoice_number) document.getElementById('invoice_number').value = d.invoice_number;
+      if (d.variable_symbol) document.getElementById('variable_symbol').value = d.variable_symbol;
+      if (d.supplier) {
+        document.getElementById('sup_name').value = d.supplier.name || '';
+        document.getElementById('sup_address').value = d.supplier.address || '';
+        document.getElementById('sup_city').value = d.supplier.city || '';
+        document.getElementById('sup_ico').value = d.supplier.ico || '';
+        document.getElementById('sup_dic').value = d.supplier.dic || '';
+        document.getElementById('sup_register').value = d.supplier.register || '';
+      }
+      if (d.customer) {
+        document.getElementById('cust_name').value = d.customer.name || '';
+        document.getElementById('cust_address').value = d.customer.address || '';
+        document.getElementById('cust_city').value = d.customer.city || '';
+        document.getElementById('cust_ico').value = d.customer.ico || '';
+        document.getElementById('cust_dic').value = d.customer.dic || '';
+        document.getElementById('cust_icdph').value = d.customer.icdph || '';
+      }
+      if (d.issue_date) document.getElementById('issue_date').value = skToIso(d.issue_date);
+      if (d.delivery_date) document.getElementById('delivery_date').value = skToIso(d.delivery_date);
+      if (d.due_date) document.getElementById('due_date').value = skToIso(d.due_date);
+      if (d.bank) {
+        document.getElementById('bank_name').value = d.bank.name || '';
+        document.getElementById('bank_iban').value = d.bank.iban || '';
+      }
+      if (d.items && Array.isArray(d.items)) {
+        items = d.items;
+      } else if (d.item) {
+        items = [{ description: d.item.description || '', price: d.item.price || '0,00' }];
+      }
+      if (d.issuer) {
+        document.getElementById('issuer_name').value = d.issuer.name || '';
+        document.getElementById('issuer_phone').value = d.issuer.phone || '';
+        document.getElementById('issuer_email').value = d.issuer.email || '';
+      }
+      renderItems();
+      alert('\u2705 JSON na\u010d\u00edtan\u00fd!');
+    } catch (err) {
+      alert('\u274c Chyba pri \u010d\u00edtan\u00ed JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+/* ─── INIT ─── */
+renderItems();
+</script>
+</body>
+</html>

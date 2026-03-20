@@ -1,0 +1,14 @@
+# Ignore real invoice data (contains personal/financial info)
+invoice_data_*.json
+!invoice_data_sample.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
