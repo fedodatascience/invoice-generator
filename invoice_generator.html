@@ -460,6 +460,7 @@ function renderItems() {
 function addItem() {
   items.push({ description: '', price: '0,00' });
   renderItems();
+  saveToStorage();
   const rows = document.querySelectorAll('#itemsBody tr');
   const last = rows[rows.length - 1];
   if (last) last.querySelector('input').focus();
@@ -469,6 +470,7 @@ function removeItem(i) {
   if (items.length <= 1) return;
   items.splice(i, 1);
   renderItems();
+  saveToStorage();
 }
 
 function parsePrice(s) {
@@ -649,6 +651,7 @@ function importJSON(e) {
         document.getElementById('issuer_email').value = d.issuer.email || '';
       }
       renderItems();
+      saveToStorage();
       alert('\u2705 JSON na\u010d\u00edtan\u00fd!');
     } catch (err) {
       alert('\u274c Chyba pri \u010d\u00edtan\u00ed JSON: ' + err.message);
@@ -658,8 +661,46 @@ function importJSON(e) {
   e.target.value = '';
 }
 
+/* ─── LOCAL STORAGE ─── */
+const STORAGE_KEY = 'invoice_generator_v1';
+
+function saveToStorage() {
+  var fields = [
+    'invoice_number','variable_symbol',
+    'sup_name','sup_address','sup_city','sup_ico','sup_dic','sup_register',
+    'cust_name','cust_address','cust_city','cust_ico','cust_dic','cust_icdph',
+    'issue_date','delivery_date','due_date',
+    'bank_name','bank_iban',
+    'issuer_name','issuer_phone','issuer_email'
+  ];
+  var data = { items: items };
+  fields.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadFromStorage() {
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  try {
+    var data = JSON.parse(raw);
+    Object.keys(data).forEach(function(key) {
+      if (key === 'items') return;
+      var el = document.getElementById(key);
+      if (el) el.value = data[key];
+    });
+    if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+      items = data.items;
+    }
+  } catch(e) {}
+}
+
 /* ─── INIT ─── */
+loadFromStorage();
 renderItems();
+document.getElementById('formPage').addEventListener('input', saveToStorage);
 </script>
 </body>
 </html>

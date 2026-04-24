@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.0 — 2026-04-24
+
+- Added localStorage autosave — form data persists across page refreshes and browser restarts
+- Imported JSON data is also persisted automatically
+
 ## v1.0.0 — 2026-03-20
 
 - Initial release
