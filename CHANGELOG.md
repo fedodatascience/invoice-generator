@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.3.0 — 2026-10-31
+
+- Added multi-client profile system: "Profily" dropdown on both Dodávateľ and Odberateľ section headers
+- Built-in customer profile: o.z.Dúhovka-DTH (Ševčenkova 33, Bratislava)
+- User-saved profiles persist in localStorage; deletable via × button
+- "Uložiť aktuálne ako profil" saves current fields as a named profile
+- No second HTML file needed for different clients
+
+## v1.2.0 — 2026-10-31
+
+- Fixed empty form on fresh load (new browser, incognito, different machine)
+- Form now pre-fills with sample/placeholder data when localStorage is empty
+- Defaults match invoice_data_sample.json
+
 ## v1.1.0 — 2026-04-24
 
 - Added localStorage autosave — form data persists across page refreshes and browser restarts
