@@ -94,7 +94,57 @@
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 8px;
+    justify-content: space-between;
   }
+  .section-title-left { display: flex; align-items: center; gap: 8px; }
+
+  /* ─── PROFILE DROPDOWN ─── */
+  .profile-wrap { position: relative; }
+  .profile-btn {
+    font-family: inherit; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.4px; text-transform: uppercase;
+    color: var(--ink3); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 3px 9px; cursor: pointer;
+    transition: all 0.15s; display: flex; align-items: center; gap: 4px;
+  }
+  .profile-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .profile-btn svg { width: 11px; height: 11px; }
+  .profile-menu {
+    display: none; position: absolute; right: 0; top: calc(100% + 4px);
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 6px; box-shadow: var(--shadow-lg);
+    min-width: 210px; z-index: 200; overflow: hidden;
+  }
+  .profile-menu.open { display: block; }
+  .profile-menu-section { padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .profile-menu-section:last-child { border-bottom: none; }
+  .profile-menu-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--ink3);
+    padding: 4px 14px 2px;
+  }
+  .profile-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 14px; cursor: pointer; font-size: 12px;
+    color: var(--ink); transition: background 0.1s;
+  }
+  .profile-item:hover { background: var(--accent-light); }
+  .profile-item-name { flex: 1; }
+  .profile-item-del {
+    background: none; border: none; cursor: pointer;
+    color: var(--ink3); font-size: 14px; padding: 0 0 0 8px;
+    line-height: 1; transition: color 0.1s;
+  }
+  .profile-item-del:hover { color: var(--red); }
+  .profile-save-btn {
+    display: block; width: 100%; text-align: left;
+    padding: 7px 14px; font-size: 12px; font-family: inherit;
+    background: none; border: none; cursor: pointer;
+    color: var(--accent); font-weight: 500;
+    transition: background 0.1s;
+  }
+  .profile-save-btn:hover { background: var(--accent-light); }
   .section-title svg { width: 15px; height: 15px; opacity: 0.7; }
 
   .grid { display: grid; gap: 14px; }
@@ -314,8 +364,17 @@
   <div class="grid grid-2">
     <div class="section">
       <div class="section-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Dodávateľ
+        <span class="section-title-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Dodávateľ
+        </span>
+        <div class="profile-wrap">
+          <button class="profile-btn" onclick="toggleProfileMenu('sup',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            Profily
+          </button>
+          <div class="profile-menu" id="profileMenu_sup"></div>
+        </div>
       </div>
       <div class="grid" style="grid-template-columns:1fr;">
         <div><label>Názov</label><input id="sup_name" value=""></div>
@@ -331,8 +390,17 @@
 
     <div class="section">
       <div class="section-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Odberateľ
+        <span class="section-title-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Odberateľ
+        </span>
+        <div class="profile-wrap">
+          <button class="profile-btn" onclick="toggleProfileMenu('cust',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            Profily
+          </button>
+          <div class="profile-menu" id="profileMenu_cust"></div>
+        </div>
       </div>
       <div class="grid" style="grid-template-columns:1fr;">
         <div><label>Názov</label><input id="cust_name" value=""></div>
@@ -696,6 +764,130 @@ function loadFromStorage() {
     }
   } catch(e) {}
 }
+
+/* ─── PROFILES ─── */
+const PROFILES_KEY = 'invoice_profiles_v1';
+
+const BUILTIN_PROFILES = {
+  sup: [
+    {
+      _name: 'Vzorová firma s. r. o.',
+      sup_name: 'Vzorová firma s. r. o.',
+      sup_address: 'Hlavná 1',
+      sup_city: '010 01 Žilina, Slovensko',
+      sup_ico: '12345678',
+      sup_dic: '2012345678',
+      sup_register: 'Obchodný register OS Žilina, oddiel: Sro, vložka č. 12345/L'
+    }
+  ],
+  cust: [
+    {
+      _name: 'o.z.Dúhovka-DTH',
+      cust_name: 'o.z.Dúhovka-DTH',
+      cust_address: 'Ševčenkova 33',
+      cust_city: '851 01 Bratislava',
+      cust_ico: '55336442',
+      cust_dic: '2122005215',
+      cust_icdph: ''
+    }
+  ]
+};
+
+const PROFILE_FIELDS = {
+  sup: ['sup_name','sup_address','sup_city','sup_ico','sup_dic','sup_register'],
+  cust: ['cust_name','cust_address','cust_city','cust_ico','cust_dic','cust_icdph']
+};
+
+function getUserProfiles() {
+  try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || { sup: [], cust: [] }; }
+  catch(e) { return { sup: [], cust: [] }; }
+}
+
+function saveUserProfiles(p) {
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(p));
+}
+
+function applyProfile(side, profile) {
+  PROFILE_FIELDS[side].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = profile[id] || '';
+  });
+  saveToStorage();
+}
+
+function saveCurrentAsProfile(side) {
+  var name = prompt('Názov profilu:');
+  if (!name || !name.trim()) return;
+  var profile = { _name: name.trim() };
+  PROFILE_FIELDS[side].forEach(function(id) {
+    var el = document.getElementById(id);
+    profile[id] = el ? el.value : '';
+  });
+  var p = getUserProfiles();
+  p[side] = p[side].filter(function(x) { return x._name !== name.trim(); });
+  p[side].push(profile);
+  saveUserProfiles(p);
+  renderProfileMenu(side);
+}
+
+function deleteUserProfile(side, name) {
+  var p = getUserProfiles();
+  p[side] = p[side].filter(function(x) { return x._name !== name; });
+  saveUserProfiles(p);
+  renderProfileMenu(side);
+}
+
+function renderProfileMenu(side) {
+  var menu = document.getElementById('profileMenu_' + side);
+  if (!menu) return;
+  var builtins = BUILTIN_PROFILES[side];
+  var user = getUserProfiles()[side];
+  var html = '';
+
+  if (builtins.length > 0) {
+    html += '<div class="profile-menu-section"><div class="profile-menu-label">Uložené</div>';
+    builtins.forEach(function(p) {
+      html += '<div class="profile-item" onclick="applyProfile(\'' + side + '\',' + JSON.stringify(p).replace(/'/g,"&#39;") + ');closeProfileMenus()">' +
+        '<span class="profile-item-name">' + esc(p._name) + '</span></div>';
+    });
+    html += '</div>';
+  }
+
+  if (user.length > 0) {
+    html += '<div class="profile-menu-section"><div class="profile-menu-label">Moje profily</div>';
+    user.forEach(function(p) {
+      html += '<div class="profile-item">' +
+        '<span class="profile-item-name" onclick="applyProfile(\'' + side + '\',' + JSON.stringify(p).replace(/'/g,"&#39;") + ');closeProfileMenus()">' + esc(p._name) + '</span>' +
+        '<button class="profile-item-del" onclick="deleteUserProfile(\'' + side + '\',\'' + p._name.replace(/'/g,"\\'") + '\')" title="Odstrániť">&times;</button>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="profile-menu-section"><button class="profile-save-btn" onclick="saveCurrentAsProfile(\'' + side + '\');closeProfileMenus()">+ Uložiť aktuálne ako profil</button></div>';
+  menu.innerHTML = html;
+}
+
+function toggleProfileMenu(side, btn) {
+  ['sup','cust'].forEach(function(s) {
+    if (s !== side) document.getElementById('profileMenu_' + s).classList.remove('open');
+  });
+  var menu = document.getElementById('profileMenu_' + side);
+  var isOpen = menu.classList.contains('open');
+  if (!isOpen) renderProfileMenu(side);
+  menu.classList.toggle('open', !isOpen);
+}
+
+function closeProfileMenus() {
+  ['sup','cust'].forEach(function(s) {
+    var m = document.getElementById('profileMenu_' + s);
+    if (m) m.classList.remove('open');
+  });
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.profile-wrap')) closeProfileMenus();
+});
 
 /* ─── DEFAULTS (loaded when localStorage is empty) ─── */
 var DEFAULTS = {
