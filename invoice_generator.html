@@ -830,24 +830,29 @@ function saveCurrentAsProfile(side) {
   renderProfileMenu(side);
 }
 
-function deleteUserProfile(side, name) {
+function deleteUserProfile(side, cacheIdx) {
+  var profile = _profileCache[side] && _profileCache[side][cacheIdx];
+  if (!profile) return;
   var p = getUserProfiles();
-  p[side] = p[side].filter(function(x) { return x._name !== name; });
+  p[side] = p[side].filter(function(x) { return x._name !== profile._name; });
   saveUserProfiles(p);
   renderProfileMenu(side);
 }
+
+var _profileCache = {};
 
 function renderProfileMenu(side) {
   var menu = document.getElementById('profileMenu_' + side);
   if (!menu) return;
   var builtins = BUILTIN_PROFILES[side];
   var user = getUserProfiles()[side];
+  _profileCache[side] = builtins.concat(user);
   var html = '';
 
   if (builtins.length > 0) {
     html += '<div class="profile-menu-section"><div class="profile-menu-label">Uložené</div>';
-    builtins.forEach(function(p) {
-      html += '<div class="profile-item" onclick="applyProfile(\'' + side + '\',' + JSON.stringify(p).replace(/'/g,"&#39;") + ');closeProfileMenus()">' +
+    builtins.forEach(function(p, i) {
+      html += '<div class="profile-item" onclick="applyProfileByIndex(\'' + side + '\',' + i + ');closeProfileMenus()">' +
         '<span class="profile-item-name">' + esc(p._name) + '</span></div>';
     });
     html += '</div>';
@@ -855,10 +860,11 @@ function renderProfileMenu(side) {
 
   if (user.length > 0) {
     html += '<div class="profile-menu-section"><div class="profile-menu-label">Moje profily</div>';
-    user.forEach(function(p) {
+    user.forEach(function(p, i) {
+      var cacheIdx = builtins.length + i;
       html += '<div class="profile-item">' +
-        '<span class="profile-item-name" onclick="applyProfile(\'' + side + '\',' + JSON.stringify(p).replace(/'/g,"&#39;") + ');closeProfileMenus()">' + esc(p._name) + '</span>' +
-        '<button class="profile-item-del" onclick="deleteUserProfile(\'' + side + '\',\'' + p._name.replace(/'/g,"\\'") + '\')" title="Odstrániť">&times;</button>' +
+        '<span class="profile-item-name" onclick="applyProfileByIndex(\'' + side + '\',' + cacheIdx + ');closeProfileMenus()">' + esc(p._name) + '</span>' +
+        '<button class="profile-item-del" onclick="deleteUserProfile(\'' + side + '\',' + cacheIdx + ')" title="Odstrániť">&times;</button>' +
         '</div>';
     });
     html += '</div>';
@@ -866,6 +872,11 @@ function renderProfileMenu(side) {
 
   html += '<div class="profile-menu-section"><button class="profile-save-btn" onclick="saveCurrentAsProfile(\'' + side + '\');closeProfileMenus()">+ Uložiť aktuálne ako profil</button></div>';
   menu.innerHTML = html;
+}
+
+function applyProfileByIndex(side, idx) {
+  var p = _profileCache[side] && _profileCache[side][idx];
+  if (p) applyProfile(side, p);
 }
 
 function toggleProfileMenu(side, btn) {

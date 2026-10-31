@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.1 — 2026-10-31
+
+- Fixed profile selection not applying fields — JSON with double quotes inside onclick attributes was breaking HTML; switched to index-based lookup
+
 ## v1.3.0 — 2026-10-31
 
 - Added multi-client profile system: "Profily" dropdown on both Dodávateľ and Odberateľ section headers
