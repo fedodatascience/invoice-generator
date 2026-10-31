@@ -697,8 +697,51 @@ function loadFromStorage() {
   } catch(e) {}
 }
 
+/* ─── DEFAULTS (loaded when localStorage is empty) ─── */
+var DEFAULTS = {
+  "invoice_number": "202601",
+  "variable_symbol": "202601",
+  "sup_name": "Vzorová firma s. r. o.",
+  "sup_address": "Hlavná 1",
+  "sup_city": "010 01 Žilina, Slovensko",
+  "sup_ico": "12345678",
+  "sup_dic": "2012345678",
+  "sup_register": "Obchodný register OS Žilina, oddiel: Sro, vložka č. 12345/L",
+  "cust_name": "Klient s. r. o.",
+  "cust_address": "Obchodná 10",
+  "cust_city": "811 06 Bratislava, Slovensko",
+  "cust_ico": "87654321",
+  "cust_dic": "2087654321",
+  "cust_icdph": "SK2087654321",
+  "issue_date": "2026-01-15",
+  "delivery_date": "2026-01-15",
+  "due_date": "2026-01-31",
+  "bank_name": "Slovenská sporiteľňa, a.s.",
+  "bank_iban": "SK00 0000 0000 0000 0000 0000",
+  "issuer_name": "Ján Vzorový",
+  "issuer_phone": "+421 900 000 000",
+  "issuer_email": "jan@vzorovafirma.sk",
+  "items": [
+    { "description": "Poradenstvo v oblasti marketingu za mesiac Január 2026", "price": "2 500,00" },
+    { "description": "Správa reklamných kampaní — Január 2026", "price": "1 000,00" }
+  ]
+};
+
+function loadDefaults() {
+  Object.keys(DEFAULTS).forEach(function(key) {
+    if (key === 'items') return;
+    var el = document.getElementById(key);
+    if (el) el.value = DEFAULTS[key];
+  });
+  items = DEFAULTS.items.slice();
+}
+
 /* ─── INIT ─── */
-loadFromStorage();
+if (localStorage.getItem(STORAGE_KEY)) {
+  loadFromStorage();
+} else {
+  loadDefaults();
+}
 renderItems();
 document.getElementById('formPage').addEventListener('input', saveToStorage);
 </script>
